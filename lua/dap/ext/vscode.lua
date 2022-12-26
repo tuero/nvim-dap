@@ -120,6 +120,14 @@ function M._load_json(jsonstr)
 end
 
 
+-- Helper function to add all key-value pairs from sub-table
+function move_table_up(config, sub_config_name)
+  for key, value in pairs(config[sub_config_name]) do 
+    config[key] = value
+  end
+  config[sub_config_name] = nil
+end
+
 --- Extends dap.configurations with entries read from .vscode/launch.json
 function M.load_launchjs(path, type_to_filetypes)
   type_to_filetypes = vim.tbl_extend('keep', type_to_filetypes or {}, M.type_to_filetypes)
@@ -148,6 +156,14 @@ function M.load_launchjs(path, type_to_filetypes)
           -- remove old value
           table.remove(dap_configurations, i)
         end
+      end
+      -- check for OS specific values and insert into config
+      if config["linux"] ~= nil and vim.loop.os_uname().sysname == 'Linux' then
+        move_table_up(config, "linux")
+      elseif config["osx"] ~= nil and vim.loop.os_uname().sysname == 'Darwin' then
+        move_table_up(config, "osx")
+      elseif config["windows"] ~= nil and vim.loop.os_uname().sysname == 'Windows' then
+        move_table_up(config, "windows")
       end
       table.insert(dap_configurations, config)
       dap.configurations[filetype] = dap_configurations
